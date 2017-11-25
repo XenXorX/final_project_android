@@ -1,0 +1,7 @@
+<resources>
+    <string name="app_name">MyMeMe</string>
+
+    <!-- TODO: Remove or change this placeholder text -->
+    <string name="add_photo">Add photo</string>
+
+</resources>
