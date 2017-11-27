@@ -8,12 +8,15 @@ import android.graphics.Bitmap;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
+import android.support.constraint.ConstraintLayout;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -21,18 +24,23 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
+import finalproject.kmitl.chanapat58070024.mymeme.model.TextViewList;
+
 public class MainActivity extends AppCompatActivity {
     private final int REQUEST_CAMERA = 0;
     private final int SELECT_FILE = 1;
 
+    private ConstraintLayout editImageLayout;
     private ImageView imageView;
-    private String currentPhotoPath;
     private String userChoosenTask;
+    private TextViewList textViewList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
+
+        editImageLayout = findViewById(R.id.editImageLayout);
 
         imageView = findViewById(R.id.imageView);
 
@@ -43,6 +51,16 @@ public class MainActivity extends AppCompatActivity {
                 selectImage();
             }
         });
+
+        Button btnText = findViewById(R.id.btn_text);
+        btnText.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                crateText();
+            }
+        });
+
+        textViewList = new TextViewList();
     }
 
     @Override
@@ -137,7 +155,7 @@ public class MainActivity extends AppCompatActivity {
 
     @SuppressWarnings("deprecation")
     private void onSelectFromGalleryResult(Intent data) {
-        Bitmap bm=null;
+        Bitmap bm = null;
         if (data != null) {
             try {
                 bm = MediaStore.Images.Media.getBitmap(getApplicationContext().getContentResolver(), data.getData());
@@ -146,5 +164,44 @@ public class MainActivity extends AppCompatActivity {
             }
         }
         imageView.setImageBitmap(bm);
+    }
+
+    private void crateText() {
+        TextView textView = new TextView(getApplicationContext());
+        ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
+                ConstraintLayout.LayoutParams.WRAP_CONTENT,
+                ConstraintLayout.LayoutParams.WRAP_CONTENT);
+
+        textView.setLayoutParams(layoutParams);
+        textView.setText("Your text");
+        textView.setTextSize(36);
+        textView.setOnTouchListener(new View.OnTouchListener() {
+            @Override
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                if (motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
+                    view.setX(motionEvent.getRawX() - view.getWidth() * 0.5f);
+                    view.setY(motionEvent.getRawY() - view.getHeight() - editImageLayout.getY());
+
+                    if(view.getX() <= 0) {
+                        view.setX(0);
+                    }
+                    if(view.getX() + view.getWidth() >= editImageLayout.getWidth()) {
+                        view.setX(editImageLayout.getWidth() - view.getWidth());
+                    }
+
+                    if(view.getY() <= 0) {
+                        view.setY(0);
+                    }
+                    if(view.getY() + view.getHeight() >= editImageLayout.getHeight()) {
+                        view.setY(editImageLayout.getHeight() - view.getHeight());
+                    }
+                }
+
+                return true;
+            }
+        });
+
+        textViewList.addTextView(textView);
+        editImageLayout.addView(textView);
     }
 }

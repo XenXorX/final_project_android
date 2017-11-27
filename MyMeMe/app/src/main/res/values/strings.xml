@@ -3,5 +3,6 @@
 
     <!-- TODO: Remove or change this placeholder text -->
     <string name="add_photo">Add photo</string>
+    <string name="create_text">Create Text</string>
 
 </resources>
