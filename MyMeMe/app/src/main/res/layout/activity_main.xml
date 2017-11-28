@@ -10,6 +10,7 @@
         android:id="@+id/scrollView"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:scrollbars="none"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent">
@@ -18,25 +19,40 @@
             android:layout_width="wrap_content"
             android:layout_height="match_parent">
 
-            <Button
-                android:id="@+id/btn_add"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <ImageButton
+                android:id="@+id/btn_camera"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_marginBottom="8dp"
-                android:text="@string/add_photo"
+                android:background="@drawable/ic_photo_camera_black_24dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent" />
 
-            <Button
-                android:id="@+id/btn_text"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <ImageButton
+                android:id="@+id/btn_gallery"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
                 android:layout_marginBottom="8dp"
-                android:text="@string/create_text"
+                android:background="@drawable/ic_photo_library_black_24dp"
                 app:layout_constraintBottom_toBottomOf="parent"
                 app:layout_constraintLeft_toLeftOf="parent"
                 app:layout_constraintRight_toRightOf="parent" />
+
+            <ImageButton
+                android:id="@+id/btn_text"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginBottom="8dp"
+                android:background="@drawable/ic_title_black_24dp"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintLeft_toLeftOf="parent"
+                app:layout_constraintRight_toRightOf="parent" />
+
+            <FrameLayout
+                android:id="@+id/fragmentContainer"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content" />
         </LinearLayout>
     </HorizontalScrollView>
 

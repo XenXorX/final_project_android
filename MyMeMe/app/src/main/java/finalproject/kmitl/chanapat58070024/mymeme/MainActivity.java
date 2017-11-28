@@ -1,20 +1,22 @@
 package finalproject.kmitl.chanapat58070024.mymeme;
 
 import android.app.Activity;
-import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
-import android.support.v7.app.AlertDialog;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentManager;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -24,43 +26,77 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
-import finalproject.kmitl.chanapat58070024.mymeme.model.TextViewList;
+import finalproject.kmitl.chanapat58070024.mymeme.fragment.TextEditFragment;
+import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
+import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextViewList;
 
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements MyTextView.MyTextChangeListener {
     private final int REQUEST_CAMERA = 0;
     private final int SELECT_FILE = 1;
+    private final String TAG_TEXT_EDIT_FRAGMENT = "tag_text_edit_fragment";
 
     private ConstraintLayout editImageLayout;
     private ImageView imageView;
-    private String userChoosenTask;
-    private TextViewList textViewList;
+    private int userChoosenTask;
+    private FragmentManager fragmentManager;
+    private MyTextViewList myTextViewList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
+        fragmentManager = getSupportFragmentManager();
+        myTextViewList = new MyTextViewList();
+
         editImageLayout = findViewById(R.id.editImageLayout);
-
-        imageView = findViewById(R.id.imageView);
-
-        Button btnAdd = findViewById(R.id.btn_add);
-        btnAdd.setOnClickListener(new View.OnClickListener() {
+        editImageLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
-            public void onClick(View view) {
-                selectImage();
+            public boolean onTouch(View view, MotionEvent motionEvent) {
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_DOWN:
+                        removeTextProperties();
+                        myTextViewList.removeSelected();
+                        break;
+                }
+
+                return true;
             }
         });
 
-        Button btnText = findViewById(R.id.btn_text);
+        imageView = findViewById(R.id.imageView);
+
+        ImageButton btnCamera = findViewById(R.id.btn_camera);
+        btnCamera.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                userChoosenTask = REQUEST_CAMERA;
+                boolean result = Utility.checkPermission(MainActivity.this);
+                if (result) {
+                    cameraIntent();
+                }
+            }
+        });
+
+        ImageButton btnGallery = findViewById(R.id.btn_gallery);
+        btnGallery.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                userChoosenTask = SELECT_FILE;
+                boolean result = Utility.checkPermission(MainActivity.this);
+                if (result) {
+                    galleryIntent();
+                }
+            }
+        });
+
+        ImageButton btnText = findViewById(R.id.btn_text);
         btnText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 crateText();
             }
         });
-
-        textViewList = new TextViewList();
     }
 
     @Override
@@ -80,42 +116,13 @@ public class MainActivity extends AppCompatActivity {
         switch (requestCode) {
             case Utility.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (userChoosenTask.equals("Take Photo"))
+                    if (userChoosenTask == REQUEST_CAMERA)
                         cameraIntent();
-                    else if (userChoosenTask.equals("Choose from Library"))
+                    else if (userChoosenTask == SELECT_FILE)
                         galleryIntent();
                 }
                 break;
         }
-    }
-
-    private void selectImage() {
-        final CharSequence[] items = {"Take Photo", "Choose from Library",
-                "Cancel"};
-
-        AlertDialog.Builder builder = new AlertDialog.Builder(MainActivity.this);
-        builder.setTitle("Add Photo");
-        builder.setItems(items, new DialogInterface.OnClickListener() {
-            @Override
-            public void onClick(DialogInterface dialog, int item) {
-                boolean result = Utility.checkPermission(MainActivity.this);
-
-                if (items[item].equals("Take Photo")) {
-                    userChoosenTask = "Take Photo";
-                    if (result)
-                        cameraIntent();
-
-                } else if (items[item].equals("Choose from Library")) {
-                    userChoosenTask = "Choose from Library";
-                    if (result)
-                        galleryIntent();
-
-                } else if (items[item].equals("Cancel")) {
-                    dialog.dismiss();
-                }
-            }
-        });
-        builder.show();
     }
 
     private void galleryIntent() {
@@ -167,41 +174,87 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void crateText() {
-        TextView textView = new TextView(getApplicationContext());
+        final TextView textView = new TextView(getApplicationContext());
         ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
                 ConstraintLayout.LayoutParams.WRAP_CONTENT,
                 ConstraintLayout.LayoutParams.WRAP_CONTENT);
 
         textView.setLayoutParams(layoutParams);
+        textView.setPadding(20, 20, 20, 20);
         textView.setText("Your text");
         textView.setTextSize(36);
+        textView.setTextColor(Color.BLACK);
+        textView.setBackground(getDrawable(R.drawable.selected_textview));
         textView.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
-                if (motionEvent.getAction() == MotionEvent.ACTION_MOVE) {
-                    view.setX(motionEvent.getRawX() - view.getWidth() * 0.5f);
-                    view.setY(motionEvent.getRawY() - view.getHeight() - editImageLayout.getY());
-
-                    if(view.getX() <= 0) {
-                        view.setX(0);
-                    }
-                    if(view.getX() + view.getWidth() >= editImageLayout.getWidth()) {
-                        view.setX(editImageLayout.getWidth() - view.getWidth());
-                    }
-
-                    if(view.getY() <= 0) {
-                        view.setY(0);
-                    }
-                    if(view.getY() + view.getHeight() >= editImageLayout.getHeight()) {
-                        view.setY(editImageLayout.getHeight() - view.getHeight());
-                    }
+                switch (motionEvent.getAction()) {
+                    case MotionEvent.ACTION_MOVE:
+                        moveText(view, motionEvent);
+                        break;
+                    case MotionEvent.ACTION_DOWN:
+                        myTextViewList.removeSelected((TextView) view);
+                        view.setBackground(getDrawable(R.drawable.selected_textview));
+                        addTextProperties(view, motionEvent);
+                        break;
                 }
 
                 return true;
             }
         });
 
-        textViewList.addTextView(textView);
+        MyTextView myTextView = new MyTextView(textView);
+        myTextView.setListener(MainActivity.this);
+        myTextViewList.addMyTextView(myTextView);
+        myTextViewList.removeSelected(textView);
         editImageLayout.addView(textView);
+    }
+
+    private void moveText(View view, MotionEvent motionEvent) {
+        view.setX(motionEvent.getRawX() - view.getWidth() * 0.5f);
+        view.setY(motionEvent.getRawY() - view.getHeight() - editImageLayout.getY());
+
+        if (view.getX() <= 0) {
+            view.setX(0);
+        }
+        if (view.getX() + view.getWidth() >= editImageLayout.getWidth()) {
+            view.setX(editImageLayout.getWidth() - view.getWidth());
+        }
+
+        if (view.getY() <= 0) {
+            view.setY(0);
+        }
+        if (view.getY() + view.getHeight() >= editImageLayout.getHeight()) {
+            view.setY(editImageLayout.getHeight() - view.getHeight());
+        }
+    }
+
+    private void addTextProperties(View view, MotionEvent motionEvent) {
+        MyTextView myTextView = myTextViewList.findMyTextView((TextView) view);
+
+        FragmentTransaction transaction = fragmentManager.beginTransaction();
+        transaction.replace(R.id.fragmentContainer,
+                new TextEditFragment().newInstance(myTextView),
+                TAG_TEXT_EDIT_FRAGMENT);
+        transaction.commit();
+    }
+
+    private void removeTextProperties() {
+        Fragment fragment = fragmentManager.findFragmentByTag(TAG_TEXT_EDIT_FRAGMENT);
+        if (fragment != null) {
+            FragmentTransaction transaction = fragmentManager.beginTransaction();
+            transaction.remove(fragment);
+            transaction.commit();
+        }
+    }
+
+    @Override
+    public void onMyTextViewChanged(MyTextView myTextView) {
+
+    }
+
+    @Override
+    public void onMyTextViewRemove(MyTextView myTextView) {
+        myTextViewList.removeMyTextView(myTextView);
     }
 }
