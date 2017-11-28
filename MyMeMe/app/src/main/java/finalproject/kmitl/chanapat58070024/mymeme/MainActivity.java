@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.net.Uri;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -50,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         myTextViewList = new MyTextViewList();
 
         editImageLayout = findViewById(R.id.editImageLayout);
+        editImageLayout.setDrawingCacheEnabled(true);
         editImageLayout.setOnTouchListener(new View.OnTouchListener() {
             @Override
             public boolean onTouch(View view, MotionEvent motionEvent) {
@@ -97,6 +99,23 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
                 crateText();
             }
         });
+
+        ImageButton btnSave = findViewById(R.id.btn_save);
+        btnSave.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                myTextViewList.removeSelected();
+            }
+        });
+
+        ImageButton btnShare = findViewById(R.id.btn_share);
+        btnShare.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                myTextViewList.removeSelected();
+                shareIntent();
+            }
+        });
     }
 
     @Override
@@ -137,14 +156,35 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         startActivityForResult(intent, REQUEST_CAMERA);
     }
 
+    private void shareIntent() {
+        editImageLayout.buildDrawingCache();
+        Bitmap thumbnail = editImageLayout.getDrawingCache();
+
+        Intent share = new Intent(Intent.ACTION_SEND);
+        share.setType("image/jpeg");
+        String path = MediaStore.Images.Media.insertImage(getContentResolver(),
+                thumbnail,
+                String.valueOf(System.currentTimeMillis()),
+                null);
+        share.putExtra(Intent.EXTRA_STREAM, Uri.parse(path));
+        editImageLayout.destroyDrawingCache();
+
+        startActivity(Intent.createChooser(share, "Share Image"));
+    }
+
     private void onCaptureImageResult(Intent data) {
         Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
+        createTempImage(thumbnail);
+
+        imageView.setImageBitmap(thumbnail);
+    }
+
+    private void createTempImage(Bitmap thumbnail) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 90, bytes);
+        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
 
         File destination = new File(Environment.getExternalStorageDirectory(),
                 System.currentTimeMillis() + ".jpg");
-
         FileOutputStream fo;
         try {
             destination.createNewFile();
@@ -156,8 +196,6 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        imageView.setImageBitmap(thumbnail);
     }
 
     @SuppressWarnings("deprecation")
