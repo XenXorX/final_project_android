@@ -20,6 +20,7 @@ import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
@@ -105,6 +106,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
             @Override
             public void onClick(View view) {
                 myTextViewList.removeSelected();
+                saveImage();
             }
         });
 
@@ -170,6 +172,21 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         editImageLayout.destroyDrawingCache();
 
         startActivity(Intent.createChooser(share, "Share Image"));
+    }
+
+    public void saveImage() {
+        editImageLayout.buildDrawingCache();
+        Bitmap thumbnail = editImageLayout.getDrawingCache();
+
+        MediaStore.Images.Media.insertImage(getContentResolver(),
+                thumbnail,
+                String.valueOf(System.currentTimeMillis()),
+                null);
+
+        Toast toast = Toast.makeText(this, "Save Successful!", Toast.LENGTH_LONG);
+        toast.show();
+
+        editImageLayout.destroyDrawingCache();
     }
 
     private void onCaptureImageResult(Intent data) {
