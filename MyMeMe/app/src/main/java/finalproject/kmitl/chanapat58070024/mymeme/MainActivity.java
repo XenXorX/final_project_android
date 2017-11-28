@@ -13,6 +13,7 @@ import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
+import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -42,6 +43,8 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     private int userChoosenTask;
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
+    private ImageButton btnSave;
+    private ImageButton btnShare;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -77,6 +80,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
                 boolean result = Utility.checkPermission(MainActivity.this);
                 if (result) {
                     cameraIntent();
+                    showAllBtn();
                 }
             }
         });
@@ -89,6 +93,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
                 boolean result = Utility.checkPermission(MainActivity.this);
                 if (result) {
                     galleryIntent();
+                    showAllBtn();
                 }
             }
         });
@@ -98,19 +103,21 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
             @Override
             public void onClick(View view) {
                 crateText();
+                showAllBtn();
             }
         });
 
-        ImageButton btnSave = findViewById(R.id.btn_save);
+        btnSave = findViewById(R.id.btn_save);
         btnSave.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 myTextViewList.removeSelected();
                 saveImage();
+                btnSave.setVisibility(View.GONE);
             }
         });
 
-        ImageButton btnShare = findViewById(R.id.btn_share);
+        btnShare = findViewById(R.id.btn_share);
         btnShare.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -164,11 +171,10 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         Intent share = new Intent(Intent.ACTION_SEND);
         share.setType("image/jpeg");
-        String path = MediaStore.Images.Media.insertImage(getContentResolver(),
-                thumbnail,
-                String.valueOf(System.currentTimeMillis()),
-                null);
-        share.putExtra(Intent.EXTRA_STREAM, Uri.parse(path));
+
+        File destination = createTempImage(thumbnail);
+        Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", destination);
+        share.putExtra(Intent.EXTRA_STREAM, uri);
         editImageLayout.destroyDrawingCache();
 
         startActivity(Intent.createChooser(share, "Share Image"));
@@ -196,7 +202,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         imageView.setImageBitmap(thumbnail);
     }
 
-    private void createTempImage(Bitmap thumbnail) {
+    private File createTempImage(Bitmap thumbnail) {
         ByteArrayOutputStream bytes = new ByteArrayOutputStream();
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
 
@@ -213,6 +219,8 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        return destination;
     }
 
     @SuppressWarnings("deprecation")
@@ -282,6 +290,8 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         if (view.getY() + view.getHeight() >= editImageLayout.getHeight()) {
             view.setY(editImageLayout.getHeight() - view.getHeight());
         }
+
+        btnSave.setVisibility(View.VISIBLE);
     }
 
     private void addTextProperties(View view, MotionEvent motionEvent) {
@@ -303,9 +313,14 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         }
     }
 
+    public void showAllBtn() {
+        btnSave.setVisibility(View.VISIBLE);
+        btnShare.setVisibility(View.VISIBLE);
+    }
+
     @Override
     public void onMyTextViewChanged(MyTextView myTextView) {
-
+        btnSave.setVisibility(View.VISIBLE);
     }
 
     @Override

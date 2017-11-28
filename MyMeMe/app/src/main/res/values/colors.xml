@@ -5,4 +5,11 @@
     <color name="colorAccent">#FF4081</color>
 
     <color name="black_overlay">#66000000</color>
+
+    <color name="my_background">#464646</color>
+    <color name="my_img_button">#fa960a</color>
+    <color name="my_textview">#b46405</color>
+    <color name="my_text">#ffffff</color>
+    <color name="my_edittext_background">#646464</color>
+    <color name="my_edittext_border">#1e1e1e</color>
 </resources>
