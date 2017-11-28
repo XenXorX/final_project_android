@@ -17,6 +17,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:inputType="text"
+        android:textColor="#ffffff"
         android:textSize="20sp" />
 
     <TextView
@@ -24,6 +25,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:text="@string/text"
+        android:textColor="#b46405"
         android:textSize="20sp" />
 
     <EditText
@@ -32,6 +34,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:inputType="text"
+        android:textColor="#ffffff"
         android:textSize="20sp" />
 
     <TextView
@@ -39,6 +42,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:text="@string/size"
+        android:textColor="#b46405"
         android:textSize="20sp" />
 
     <EditText
@@ -47,6 +51,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="10dp"
         android:inputType="number"
+        android:textColor="#ffffff"
         android:textSize="20sp" />
 
     <ImageButton
