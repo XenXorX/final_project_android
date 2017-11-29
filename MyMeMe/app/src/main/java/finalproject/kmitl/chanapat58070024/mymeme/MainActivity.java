@@ -28,6 +28,8 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import finalproject.kmitl.chanapat58070024.mymeme.fragment.TextEditFragment;
 import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
@@ -37,14 +39,17 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     private final int REQUEST_CAMERA = 0;
     private final int SELECT_FILE = 1;
     private final String TAG_TEXT_EDIT_FRAGMENT = "tag_text_edit_fragment";
+    private final String MEME_FOLDER = "Meme";
 
     private ConstraintLayout editImageLayout;
     private ImageView imageView;
     private int userChoosenTask;
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
+    private ImageButton btnRotate;
     private ImageButton btnSave;
     private ImageButton btnShare;
+    private Uri photoUri;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -80,7 +85,6 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
                 boolean result = Utility.checkPermission(MainActivity.this);
                 if (result) {
                     cameraIntent();
-                    showAllBtn();
                 }
             }
         });
@@ -93,7 +97,6 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
                 boolean result = Utility.checkPermission(MainActivity.this);
                 if (result) {
                     galleryIntent();
-                    showAllBtn();
                 }
             }
         });
@@ -102,8 +105,16 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         btnText.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                crateText();
+                createText();
                 showAllBtn();
+            }
+        });
+
+        btnRotate = findViewById(R.id.btn_rotate);
+        btnRotate.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                imageView.setRotation(imageView.getRotation() + 90);
             }
         });
 
@@ -132,10 +143,12 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == Activity.RESULT_OK) {
+            showAllBtn();
+
             if (requestCode == SELECT_FILE)
                 onSelectFromGalleryResult(data);
             else if (requestCode == REQUEST_CAMERA)
-                onCaptureImageResult(data);
+                onCaptureImageResult();
         }
     }
 
@@ -162,6 +175,12 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
     private void cameraIntent() {
         Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        File destination = createTempFile(bytes);
+        photoUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", destination);
+        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
+
         startActivityForResult(intent, REQUEST_CAMERA);
     }
 
@@ -169,43 +188,76 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         editImageLayout.buildDrawingCache();
         Bitmap thumbnail = editImageLayout.getDrawingCache();
 
-        Intent share = new Intent(Intent.ACTION_SEND);
-        share.setType("image/jpeg");
+        Intent intent = new Intent(Intent.ACTION_SEND);
+        intent.setType("image/jpeg");
 
-        File destination = createTempImage(thumbnail);
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        File destination = createTempImage(thumbnail, bytes);
         Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", destination);
-        share.putExtra(Intent.EXTRA_STREAM, uri);
+        intent.putExtra(Intent.EXTRA_STREAM, uri);
         editImageLayout.destroyDrawingCache();
 
-        startActivity(Intent.createChooser(share, "Share Image"));
+        startActivity(Intent.createChooser(intent, "Share Image"));
     }
 
     public void saveImage() {
         editImageLayout.buildDrawingCache();
         Bitmap thumbnail = editImageLayout.getDrawingCache();
+        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
+        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
 
-        MediaStore.Images.Media.insertImage(getContentResolver(),
-                thumbnail,
-                String.valueOf(System.currentTimeMillis()),
-                null);
+        File destination = new File(getMemePath(), timeStamp + ".jpg");
+        FileOutputStream fo;
+        try {
+            destination.createNewFile();
+            fo = new FileOutputStream(destination);
+            fo.write(bytes.toByteArray());
+            fo.close();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
 
-        Toast toast = Toast.makeText(this, "Save Successful!", Toast.LENGTH_LONG);
+        galleryAddPic(destination);
+
+        Toast toast = Toast.makeText(this, "Save Successfully!", Toast.LENGTH_LONG);
         toast.show();
 
         editImageLayout.destroyDrawingCache();
     }
 
-    private void onCaptureImageResult(Intent data) {
-        Bitmap thumbnail = (Bitmap) data.getExtras().get("data");
-        createTempImage(thumbnail);
+    private String getMemePath() {
+        File folder = new File(Environment.getExternalStorageDirectory() + "/" + MEME_FOLDER);
 
-        imageView.setImageBitmap(thumbnail);
+        if (!folder.exists()) {
+            folder.mkdirs();
+        }
+
+        return folder.getAbsolutePath();
     }
 
-    private File createTempImage(Bitmap thumbnail) {
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
+    private void galleryAddPic(File photoPath) {
+        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
+        Uri contentUri = Uri.fromFile(photoPath);
+        mediaScanIntent.setData(contentUri);
+        this.sendBroadcast(mediaScanIntent);
+    }
+
+    private void onCaptureImageResult() {
+        imageView.setImageURI(photoUri);
+    }
+
+    private File createTempImage(Bitmap thumbnail, ByteArrayOutputStream bytes) {
         thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
 
+        File destination = createTempFile(bytes);
+
+        return destination;
+    }
+
+    private File createTempFile(ByteArrayOutputStream bytes) {
         File destination = new File(Environment.getExternalStorageDirectory(),
                 System.currentTimeMillis() + ".jpg");
         FileOutputStream fo;
@@ -236,7 +288,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         imageView.setImageBitmap(bm);
     }
 
-    private void crateText() {
+    private void createText() {
         final TextView textView = new TextView(getApplicationContext());
         ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
                 ConstraintLayout.LayoutParams.WRAP_CONTENT,
@@ -314,6 +366,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     }
 
     public void showAllBtn() {
+        btnRotate.setVisibility(View.VISIBLE);
         btnSave.setVisibility(View.VISIBLE);
         btnShare.setVisibility(View.VISIBLE);
     }
