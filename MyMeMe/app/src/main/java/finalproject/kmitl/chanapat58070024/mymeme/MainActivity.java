@@ -6,14 +6,12 @@ import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.Environment;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
 import android.support.constraint.ConstraintLayout;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
-import android.support.v4.content.FileProvider;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.MotionEvent;
@@ -23,10 +21,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.io.ByteArrayOutputStream;
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
 import java.io.IOException;
 
 import finalproject.kmitl.chanapat58070024.mymeme.fragment.TextEditFragment;
@@ -34,7 +28,6 @@ import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
 import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextViewList;
 
 public class MainActivity extends AppCompatActivity implements MyTextView.MyTextChangeListener {
-    private final int REQUEST_CAMERA = 0;
     private final int SELECT_FILE = 1;
     private final String TAG_TEXT_EDIT_FRAGMENT = "tag_text_edit_fragment";
 
@@ -43,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     private int userChoosenTask;
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
+    private MyCamera myCamera;
     private MySave mySave;
     private MyShare myShare;
     private ImageButton btnRotate;
@@ -57,6 +51,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         fragmentManager = getSupportFragmentManager();
         myTextViewList = new MyTextViewList();
+        myCamera = new MyCamera(this);
         mySave = new MySave(this);
         myShare = new MyShare(this);
 
@@ -82,7 +77,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         btnCamera.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                userChoosenTask = REQUEST_CAMERA;
+                userChoosenTask = myCamera.REQUEST_CAMERA;
                 boolean result = Utility.checkPermission(MainActivity.this);
                 if (result) {
                     cameraIntent();
@@ -149,7 +144,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
             if (requestCode == SELECT_FILE)
                 onSelectFromGalleryResult(data);
-            else if (requestCode == REQUEST_CAMERA)
+            else if (requestCode == myCamera.REQUEST_CAMERA)
                 onCaptureImageResult();
         }
     }
@@ -159,7 +154,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         switch (requestCode) {
             case Utility.MY_PERMISSIONS_REQUEST_READ_EXTERNAL_STORAGE:
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    if (userChoosenTask == REQUEST_CAMERA)
+                    if (userChoosenTask == myCamera.REQUEST_CAMERA)
                         cameraIntent();
                     else if (userChoosenTask == SELECT_FILE)
                         galleryIntent();
@@ -176,14 +171,9 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     }
 
     private void cameraIntent() {
-        Intent intent = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
-
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        File destination = createTempFile(bytes);
-        photoUri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", destination);
-        intent.putExtra(MediaStore.EXTRA_OUTPUT, photoUri);
-
-        startActivityForResult(intent, REQUEST_CAMERA);
+        Intent intent = myCamera.cameraIntent();
+        photoUri = myCamera.getPhotoUri();
+        startActivityForResult(intent, myCamera.REQUEST_CAMERA);
     }
 
     private void shareIntent() {
@@ -196,30 +186,10 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         Toast toast = Toast.makeText(this, "Save Successfully!", Toast.LENGTH_LONG);
         toast.show();
-
-        editImageLayout.destroyDrawingCache();
     }
 
     private void onCaptureImageResult() {
         imageView.setImageURI(photoUri);
-    }
-
-    private File createTempFile(ByteArrayOutputStream bytes) {
-        File destination = new File(Environment.getExternalStorageDirectory(),
-                System.currentTimeMillis() + ".jpg");
-        FileOutputStream fo;
-        try {
-            destination.createNewFile();
-            fo = new FileOutputStream(destination);
-            fo.write(bytes.toByteArray());
-            fo.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        return destination;
     }
 
     @SuppressWarnings("deprecation")
