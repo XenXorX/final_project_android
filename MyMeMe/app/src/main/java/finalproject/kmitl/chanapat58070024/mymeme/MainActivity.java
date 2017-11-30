@@ -4,7 +4,6 @@ import android.app.Activity;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.net.Uri;
 import android.provider.MediaStore;
 import android.support.annotation.NonNull;
@@ -18,23 +17,19 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.ImageButton;
 import android.widget.ImageView;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.IOException;
 
-import finalproject.kmitl.chanapat58070024.mymeme.fragment.TextEditFragment;
-import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
 import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextViewList;
 
-public class MainActivity extends AppCompatActivity implements MyTextView.MyTextChangeListener {
-    private final String TAG_TEXT_EDIT_FRAGMENT = "tag_text_edit_fragment";
-
+public class MainActivity extends AppCompatActivity {
     private ConstraintLayout editImageLayout;
     private ImageView imageView;
     private int userChoosenTask;
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
+    private MyTextViewController myTextViewController;
     private MyCamera myCamera;
     private MyGallery myGallery;
     private MySave mySave;
@@ -51,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         fragmentManager = getSupportFragmentManager();
         myTextViewList = new MyTextViewList();
+        myTextViewController = new MyTextViewController(this, myTextViewList);
         myCamera = new MyCamera(this);
         myGallery = new MyGallery();
         mySave = new MySave(this);
@@ -205,75 +201,12 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     }
 
     private void createText() {
-        final TextView textView = new TextView(getApplicationContext());
-        ConstraintLayout.LayoutParams layoutParams = new ConstraintLayout.LayoutParams(
-                ConstraintLayout.LayoutParams.WRAP_CONTENT,
-                ConstraintLayout.LayoutParams.WRAP_CONTENT);
-
-        textView.setLayoutParams(layoutParams);
-        textView.setPadding(20, 20, 20, 20);
-        textView.setText("Your text");
-        textView.setTextSize(36);
-        textView.setTextColor(Color.BLACK);
-        textView.setBackground(getDrawable(R.drawable.selected_textview));
-        textView.setOnTouchListener(new View.OnTouchListener() {
-            @Override
-            public boolean onTouch(View view, MotionEvent motionEvent) {
-                switch (motionEvent.getAction()) {
-                    case MotionEvent.ACTION_MOVE:
-                        moveText(view, motionEvent);
-                        break;
-                    case MotionEvent.ACTION_DOWN:
-                        myTextViewList.removeSelected((TextView) view);
-                        view.setBackground(getDrawable(R.drawable.selected_textview));
-                        addTextProperties(view, motionEvent);
-                        break;
-                }
-
-                return true;
-            }
-        });
-
-        MyTextView myTextView = new MyTextView(textView);
-        myTextView.setListener(MainActivity.this);
-        myTextViewList.add(myTextView);
-        myTextViewList.removeSelected(textView);
-        editImageLayout.addView(textView);
-    }
-
-    private void moveText(View view, MotionEvent motionEvent) {
-        view.setX(motionEvent.getRawX() - view.getWidth() * 0.5f);
-        view.setY(motionEvent.getRawY() - view.getHeight() - editImageLayout.getY());
-
-        if (view.getX() <= 0) {
-            view.setX(0);
-        }
-        if (view.getX() + view.getWidth() >= editImageLayout.getWidth()) {
-            view.setX(editImageLayout.getWidth() - view.getWidth());
-        }
-
-        if (view.getY() <= 0) {
-            view.setY(0);
-        }
-        if (view.getY() + view.getHeight() >= editImageLayout.getHeight()) {
-            view.setY(editImageLayout.getHeight() - view.getHeight());
-        }
-
-        btnSave.setVisibility(View.VISIBLE);
-    }
-
-    private void addTextProperties(View view, MotionEvent motionEvent) {
-        MyTextView myTextView = myTextViewList.findMyTextView((TextView) view);
-
-        FragmentTransaction transaction = fragmentManager.beginTransaction();
-        transaction.replace(R.id.fragmentContainer,
-                new TextEditFragment().newInstance(myTextView),
-                TAG_TEXT_EDIT_FRAGMENT);
-        transaction.commit();
+        removeTextProperties();
+        myTextViewController.createText();
     }
 
     private void removeTextProperties() {
-        Fragment fragment = fragmentManager.findFragmentByTag(TAG_TEXT_EDIT_FRAGMENT);
+        Fragment fragment = fragmentManager.findFragmentByTag(MyTextViewController.TAG_TEXT_EDIT_FRAGMENT);
         if (fragment != null) {
             FragmentTransaction transaction = fragmentManager.beginTransaction();
             transaction.remove(fragment);
@@ -285,15 +218,5 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         btnRotate.setVisibility(View.VISIBLE);
         btnSave.setVisibility(View.VISIBLE);
         btnShare.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onMyTextViewChanged(MyTextView myTextView) {
-        btnSave.setVisibility(View.VISIBLE);
-    }
-
-    @Override
-    public void onMyTextViewRemove(MyTextView myTextView) {
-        myTextViewList.remove(myTextView);
     }
 }
