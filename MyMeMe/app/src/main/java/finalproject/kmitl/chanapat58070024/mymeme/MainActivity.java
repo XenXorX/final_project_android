@@ -46,6 +46,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     private int userChoosenTask;
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
+    private MyShare myShare;
     private ImageButton btnRotate;
     private ImageButton btnSave;
     private ImageButton btnShare;
@@ -58,6 +59,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         fragmentManager = getSupportFragmentManager();
         myTextViewList = new MyTextViewList();
+        myShare = new MyShare(this);
 
         editImageLayout = findViewById(R.id.editImageLayout);
         editImageLayout.setDrawingCacheEnabled(true);
@@ -185,18 +187,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     }
 
     private void shareIntent() {
-        editImageLayout.buildDrawingCache();
-        Bitmap thumbnail = editImageLayout.getDrawingCache();
-
-        Intent intent = new Intent(Intent.ACTION_SEND);
-        intent.setType("image/jpeg");
-
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        File destination = createTempImage(thumbnail, bytes);
-        Uri uri = FileProvider.getUriForFile(this, BuildConfig.APPLICATION_ID + ".provider", destination);
-        intent.putExtra(Intent.EXTRA_STREAM, uri);
-        editImageLayout.destroyDrawingCache();
-
+        Intent intent = myShare.shareIntent(editImageLayout);
         startActivity(Intent.createChooser(intent, "Share Image"));
     }
 
