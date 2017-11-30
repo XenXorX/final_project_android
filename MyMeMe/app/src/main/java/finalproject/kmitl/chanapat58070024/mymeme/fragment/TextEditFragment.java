@@ -1,5 +1,6 @@
 package finalproject.kmitl.chanapat58070024.mymeme.fragment;
 
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentTransaction;
@@ -131,8 +132,8 @@ public class TextEditFragment extends Fragment {
                     stringColor = etColor.getText().toString();
                 } else {
                     String result = validator.checkValidBGColor(etColor.getText().toString(), stringColor);
-                    btnColor.setBackgroundColor(Integer.parseInt(result));
-                    myTextView.setColor(Integer.parseInt(result));
+                    btnColor.setBackgroundColor(Color.parseColor(result));
+                    myTextView.setColor(Color.parseColor(result));
                     etColor.setText(result);
 
                 }
