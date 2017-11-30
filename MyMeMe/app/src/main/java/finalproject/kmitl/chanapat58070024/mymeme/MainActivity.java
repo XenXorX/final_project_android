@@ -28,8 +28,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 
 import finalproject.kmitl.chanapat58070024.mymeme.fragment.TextEditFragment;
 import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
@@ -39,13 +37,13 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     private final int REQUEST_CAMERA = 0;
     private final int SELECT_FILE = 1;
     private final String TAG_TEXT_EDIT_FRAGMENT = "tag_text_edit_fragment";
-    private final String MEME_FOLDER = "Meme";
 
     private ConstraintLayout editImageLayout;
     private ImageView imageView;
     private int userChoosenTask;
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
+    private MySave mySave;
     private MyShare myShare;
     private ImageButton btnRotate;
     private ImageButton btnSave;
@@ -59,6 +57,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         fragmentManager = getSupportFragmentManager();
         myTextViewList = new MyTextViewList();
+        mySave = new MySave(this);
         myShare = new MyShare(this);
 
         editImageLayout = findViewById(R.id.editImageLayout);
@@ -145,6 +144,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         super.onActivityResult(requestCode, resultCode, data);
 
         if (resultCode == Activity.RESULT_OK) {
+            myTextViewList.clear();
             showAllBtn();
 
             if (requestCode == SELECT_FILE)
@@ -191,27 +191,8 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         startActivity(Intent.createChooser(intent, "Share Image"));
     }
 
-    public void saveImage() {
-        editImageLayout.buildDrawingCache();
-        Bitmap thumbnail = editImageLayout.getDrawingCache();
-        ByteArrayOutputStream bytes = new ByteArrayOutputStream();
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss").format(new Date());
-
-        File destination = new File(getMemePath(), timeStamp + ".jpg");
-        FileOutputStream fo;
-        try {
-            destination.createNewFile();
-            fo = new FileOutputStream(destination);
-            fo.write(bytes.toByteArray());
-            fo.close();
-        } catch (FileNotFoundException e) {
-            e.printStackTrace();
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-
-        galleryAddPic(destination);
+    private void saveImage() {
+        mySave.saveImage(editImageLayout);
 
         Toast toast = Toast.makeText(this, "Save Successfully!", Toast.LENGTH_LONG);
         toast.show();
@@ -219,33 +200,8 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         editImageLayout.destroyDrawingCache();
     }
 
-    private String getMemePath() {
-        File folder = new File(Environment.getExternalStorageDirectory() + "/" + MEME_FOLDER);
-
-        if (!folder.exists()) {
-            folder.mkdirs();
-        }
-
-        return folder.getAbsolutePath();
-    }
-
-    private void galleryAddPic(File photoPath) {
-        Intent mediaScanIntent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-        Uri contentUri = Uri.fromFile(photoPath);
-        mediaScanIntent.setData(contentUri);
-        this.sendBroadcast(mediaScanIntent);
-    }
-
     private void onCaptureImageResult() {
         imageView.setImageURI(photoUri);
-    }
-
-    private File createTempImage(Bitmap thumbnail, ByteArrayOutputStream bytes) {
-        thumbnail.compress(Bitmap.CompressFormat.JPEG, 100, bytes);
-
-        File destination = createTempFile(bytes);
-
-        return destination;
     }
 
     private File createTempFile(ByteArrayOutputStream bytes) {
@@ -311,7 +267,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
         MyTextView myTextView = new MyTextView(textView);
         myTextView.setListener(MainActivity.this);
-        myTextViewList.addMyTextView(myTextView);
+        myTextViewList.add(myTextView);
         myTextViewList.removeSelected(textView);
         editImageLayout.addView(textView);
     }
@@ -369,6 +325,6 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
 
     @Override
     public void onMyTextViewRemove(MyTextView myTextView) {
-        myTextViewList.removeMyTextView(myTextView);
+        myTextViewList.remove(myTextView);
     }
 }

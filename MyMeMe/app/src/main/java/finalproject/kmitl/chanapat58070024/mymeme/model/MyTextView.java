@@ -77,6 +77,7 @@ public class MyTextView implements Parcelable {
 
     public interface MyTextChangeListener {
         void onMyTextViewChanged(MyTextView myTextView);
+
         void onMyTextViewRemove(MyTextView myTextView);
     }
 

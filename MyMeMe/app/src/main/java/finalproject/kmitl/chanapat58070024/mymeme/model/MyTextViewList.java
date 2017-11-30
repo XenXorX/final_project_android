@@ -12,12 +12,20 @@ public class MyTextViewList {
         myTextViews = new ArrayList<>();
     }
 
-    public void addMyTextView(MyTextView myTextView) {
+    public void add(MyTextView myTextView) {
         myTextViews.add(myTextView);
     }
 
-    public void removeMyTextView(MyTextView myTextView) {
+    public void remove(MyTextView myTextView) {
         myTextViews.remove(myTextView);
+    }
+
+    public void clear() {
+        for (MyTextView myTextView : myTextViews) {
+            myTextView.remove();
+        }
+
+        myTextViews.clear();
     }
 
     public MyTextView findMyTextView(TextView textView) {
@@ -38,7 +46,7 @@ public class MyTextViewList {
 
     public void removeSelected(TextView textView) {
         for (MyTextView myTextView : myTextViews) {
-            if(!textView.equals(myTextView.getTextView())) {
+            if (!textView.equals(myTextView.getTextView())) {
                 myTextView.getTextView().setBackgroundColor(Color.TRANSPARENT);
             }
         }
