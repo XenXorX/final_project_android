@@ -28,7 +28,6 @@ import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
 import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextViewList;
 
 public class MainActivity extends AppCompatActivity implements MyTextView.MyTextChangeListener {
-    private final int SELECT_FILE = 1;
     private final String TAG_TEXT_EDIT_FRAGMENT = "tag_text_edit_fragment";
 
     private ConstraintLayout editImageLayout;
@@ -37,6 +36,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     private FragmentManager fragmentManager;
     private MyTextViewList myTextViewList;
     private MyCamera myCamera;
+    private MyGallery myGallery;
     private MySave mySave;
     private MyShare myShare;
     private ImageButton btnRotate;
@@ -52,6 +52,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         fragmentManager = getSupportFragmentManager();
         myTextViewList = new MyTextViewList();
         myCamera = new MyCamera(this);
+        myGallery = new MyGallery();
         mySave = new MySave(this);
         myShare = new MyShare(this);
 
@@ -89,7 +90,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
         btnGallery.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                userChoosenTask = SELECT_FILE;
+                userChoosenTask = myGallery.SELECT_FILE;
                 boolean result = Utility.checkPermission(MainActivity.this);
                 if (result) {
                     galleryIntent();
@@ -142,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
             myTextViewList.clear();
             showAllBtn();
 
-            if (requestCode == SELECT_FILE)
+            if (requestCode == myGallery.SELECT_FILE)
                 onSelectFromGalleryResult(data);
             else if (requestCode == myCamera.REQUEST_CAMERA)
                 onCaptureImageResult();
@@ -156,7 +157,7 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
                 if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                     if (userChoosenTask == myCamera.REQUEST_CAMERA)
                         cameraIntent();
-                    else if (userChoosenTask == SELECT_FILE)
+                    else if (userChoosenTask == myGallery.SELECT_FILE)
                         galleryIntent();
                 }
                 break;
@@ -164,10 +165,8 @@ public class MainActivity extends AppCompatActivity implements MyTextView.MyText
     }
 
     private void galleryIntent() {
-        Intent intent = new Intent();
-        intent.setType("image/*");
-        intent.setAction(Intent.ACTION_GET_CONTENT);
-        startActivityForResult(Intent.createChooser(intent, "Select File"), SELECT_FILE);
+        Intent intent = myGallery.galleryIntent();
+        startActivityForResult(Intent.createChooser(intent, "Select File"), myGallery.SELECT_FILE);
     }
 
     private void cameraIntent() {
