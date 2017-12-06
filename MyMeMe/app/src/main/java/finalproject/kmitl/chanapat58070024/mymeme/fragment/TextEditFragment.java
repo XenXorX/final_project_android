@@ -1,5 +1,6 @@
 package finalproject.kmitl.chanapat58070024.mymeme.fragment;
 
+import android.content.DialogInterface;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -12,6 +13,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageButton;
+
+import com.flask.colorpicker.ColorPickerView;
+import com.flask.colorpicker.builder.ColorPickerClickListener;
+import com.flask.colorpicker.builder.ColorPickerDialogBuilder;
 
 import finalproject.kmitl.chanapat58070024.mymeme.R;
 import finalproject.kmitl.chanapat58070024.mymeme.model.MyTextView;
@@ -88,25 +93,6 @@ public class TextEditFragment extends Fragment {
 
         etSize = rootView.findViewById(R.id.et_size);
         etSize.setText(String.valueOf(myTextView.getSize()));
-        etSize.addTextChangedListener(new TextWatcher() {
-            @Override
-            public void beforeTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void onTextChanged(CharSequence charSequence, int i, int i1, int i2) {
-
-            }
-
-            @Override
-            public void afterTextChanged(Editable editable) {
-                String stringSize = etSize.getText().toString();
-
-                String result = validator.checkSizeLimit(stringSize);
-                etSize.setText(result);
-            }
-        });
         etSize.setOnFocusChangeListener(new View.OnFocusChangeListener() {
             @Override
             public void onFocusChange(View view, boolean b) {
@@ -116,8 +102,11 @@ public class TextEditFragment extends Fragment {
                     String stringSize = etSize.getText().toString();
 
                     String result = validator.checkEmptySize(stringSize, String.valueOf(previousSize));
-                    etSize.setText(result);
+                    if(result.equals(stringSize)) {
+                        result = validator.checkSizeLimit(stringSize);
+                    }
 
+                    etSize.setText(result);
                     myTextView.setSize(Integer.parseInt(etSize.getText().toString()));
                 }
             }
@@ -142,6 +131,31 @@ public class TextEditFragment extends Fragment {
 
         btnColor = rootView.findViewById(R.id.btn_color);
         btnColor.setBackgroundColor(myTextView.getColor());
+        btnColor.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                ColorPickerDialogBuilder
+                        .with(getContext())
+                        .setTitle("Choose color")
+                        .initialColor(myTextView.getColor())
+                        .wheelType(ColorPickerView.WHEEL_TYPE.FLOWER)
+                        .lightnessSliderOnly()
+                        .density(12)
+                        .setPositiveButton("ok", new ColorPickerClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int selectedColor, Integer[] allColors) {
+                                changeBackgroundColor(selectedColor);
+                            }
+                        })
+                        .setNegativeButton("cancel", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                            }
+                        })
+                        .build()
+                        .show();
+            }
+        });
 
         btnRemove = rootView.findViewById(R.id.btn_remove);
         btnRemove.setOnClickListener(new View.OnClickListener() {
@@ -152,6 +166,12 @@ public class TextEditFragment extends Fragment {
         });
 
         return rootView;
+    }
+
+    private void changeBackgroundColor(int selectedColor){
+        btnColor.setBackgroundColor(selectedColor);
+        etColor.setText(String.valueOf(selectedColor));
+        myTextView.setColor(selectedColor);
     }
 
     private void removeTextView() {
